@@ -31,7 +31,7 @@ const defaultProjects: Project[] = [
     title: "Website Tools",
     description: "Online developer suite providing SEO analyzers, JSON formatters, meta tag generators, and web utilities.",
     year: "2025",
-    link: "https://github.com/deeppatel8176-debug",
+    link: "https://free-tools-two-phi.vercel.app/",
     image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80",
   },
   {
