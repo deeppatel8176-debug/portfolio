@@ -43,6 +43,7 @@ export default function App() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" })
   const [githubData, setGithubData] = useState<{ date: string; count: number }[] | undefined>(undefined)
   const [githubTotal, setGithubTotal] = useState<number>(161)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [githubLoading, setGithubLoading] = useState(false)
 
   const REAL_EMAIL = "pateldeep1783@gmail.com"
@@ -76,14 +77,47 @@ export default function App() {
     setTimeout(() => setCopiedEmail(false), 2500)
   }
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.name || !formData.email || !formData.message) return
-    setContactSubmitted(true)
-    setTimeout(() => {
-      setContactSubmitted(false)
-      setFormData({ name: "", email: "", message: "" })
-    }, 4000)
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch(`https://formsubmit.co/ajax/${REAL_EMAIL}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          message: formData.message,
+          _subject: `Portfolio Message from ${formData.name}`,
+          _template: "table",
+        }),
+      })
+
+      if (response.ok) {
+        setContactSubmitted(true)
+        setFormData({ name: "", email: "", message: "" })
+        setTimeout(() => setContactSubmitted(false), 6000)
+      } else {
+        throw new Error("API submit failed")
+      }
+    } catch {
+      // Direct mailto fallback so user inquiry is never lost
+      const mailtoUrl = `mailto:${REAL_EMAIL}?subject=${encodeURIComponent(
+        `Portfolio Inquiry from ${formData.name}`
+      )}&body=${encodeURIComponent(
+        `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
+      )}`
+      window.location.href = mailtoUrl
+      setContactSubmitted(true)
+      setTimeout(() => setContactSubmitted(false), 6000)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   // View 1: The ID Card Badge (matching Image 1)
@@ -385,7 +419,7 @@ export default function App() {
             {contactSubmitted && (
               <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 shrink-0" />
-                <span>Message received! I&apos;ll get back to your email directly.</span>
+                <span>Message sent to {REAL_EMAIL}! Thanks for reaching out, I&apos;ll get back to you directly.</span>
               </div>
             )}
 
@@ -439,9 +473,17 @@ export default function App() {
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-8 py-3 rounded-lg bg-white text-black hover:bg-gray-200 font-medium text-xs font-mono tracking-wider transition-all cursor-pointer"
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto px-8 py-3 rounded-lg bg-white text-black hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed font-medium text-xs font-mono tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
-                  SEND INQUIRY →
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>SENDING EMAIL...</span>
+                    </>
+                  ) : (
+                    <span>SEND INQUIRY →</span>
+                  )}
                 </button>
 
                 <div className="flex items-center gap-4 text-xs font-mono text-gray-400">
