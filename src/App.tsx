@@ -45,6 +45,7 @@ export default function App() {
   const [githubTotal, setGithubTotal] = useState<number>(161)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [githubLoading, setGithubLoading] = useState(false)
+  const [activeSection, setActiveSection] = useState<string>("about")
 
   const REAL_EMAIL = "pateldeep1783@gmail.com"
   const REAL_GITHUB = "https://github.com/deeppatel8176-debug"
@@ -54,6 +55,44 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }, [view])
+
+  // Active section scroll tracking
+  useEffect(() => {
+    if (view !== "details") return
+
+    const sections = ["about", "skills", "projects", "github-activity", "experience", "contact"]
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 200
+
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sections[i])
+        if (el) {
+          const top = el.offsetTop
+          if (scrollPosition >= top) {
+            setActiveSection(sections[i])
+            return
+          }
+        }
+      }
+      setActiveSection("about")
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [view])
+
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    e.preventDefault()
+    const el = document.getElementById(id)
+    if (el) {
+      const yOffset = -70
+      const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset
+      window.scrollTo({ top: y, behavior: "smooth" })
+      setActiveSection(id)
+    }
+  }
 
   // Fetch real GitHub contribution data
   useEffect(() => {
@@ -148,25 +187,32 @@ export default function App() {
             <span>ID Badge Card</span>
           </button>
 
-          <nav className="flex items-center gap-6 text-xs font-mono text-gray-400">
-            <a href="#about" className="hover:text-white transition-colors hidden sm:inline-block">
-              About
-            </a>
-            <a href="#skills" className="hover:text-white transition-colors hidden sm:inline-block">
-              Skills
-            </a>
-            <a href="#projects" className="text-white hover:text-gray-300 transition-colors">
-              Projects
-            </a>
-            <a href="#github-activity" className="hover:text-white transition-colors">
-              GitHub
-            </a>
-            <a href="#experience" className="hover:text-white transition-colors hidden sm:inline-block">
-              Experience
-            </a>
-            <a href="#contact" className="hover:text-white transition-colors">
-              Contact
-            </a>
+          <nav className="flex items-center gap-6 text-xs font-mono">
+            {[
+              { id: "about", label: "About", hideOnMobile: true },
+              { id: "skills", label: "Skills", hideOnMobile: true },
+              { id: "projects", label: "Projects", hideOnMobile: false },
+              { id: "github-activity", label: "GitHub", hideOnMobile: false },
+              { id: "experience", label: "Experience", hideOnMobile: true },
+              { id: "contact", label: "Contact", hideOnMobile: false },
+            ].map((item) => {
+              const isActive = activeSection === item.id
+              return (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  onClick={(e) => scrollToSection(e, item.id)}
+                  className={`relative py-1 transition-colors cursor-pointer ${
+                    item.hideOnMobile ? "hidden sm:inline-block" : "inline-block"
+                  } ${isActive ? "text-white font-medium" : "text-gray-400 hover:text-gray-200"}`}
+                >
+                  <span>{item.label}</span>
+                  {isActive && (
+                    <span className="absolute -bottom-1 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-400 via-blue-400 to-indigo-400 rounded-full" />
+                  )}
+                </a>
+              )
+            })}
             <a
               href={RESUME_URL}
               download="Deep_Patel_Resume.pdf"
